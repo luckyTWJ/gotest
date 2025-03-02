@@ -2,17 +2,20 @@ package main
 
 import (
 	"fmt"
+	"gotest/learn01/init01/lib1"
 	_ "time"
 
 	//'_ ' 表示匿名  导入后不使用 加_ 不报错
-	_ "untitled/init01/lib2"
+
+	myLib2 "gotest/learn01/init01/lib2"
 )
 
 func main() {
 	fmt.Println("8888")
 	// 首字母大写 对外开放 否则包内调用
-	//lib1.Lib1Test()
-	//myLib2.Lib2Test()
+	lib1.Lib1Test()
+	//lib2.Lib2Test()
+	myLib2.Lib2Test()
 	//Lib1Test()
 	var a int = 10
 	var b int = 20
