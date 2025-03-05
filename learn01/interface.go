@@ -16,6 +16,8 @@ type DogIF interface {
 	AnimalIF
 	Jump()
 }
+
+// 如果Cat实现了AnimalIF接口中的所有方法，那么Cat就实现了AnimalIF接口
 type Cat struct {
 	color   string
 	typeStr string
@@ -64,15 +66,21 @@ func (this *Dog) Run() {
 
 }
 func main() {
-	//cat := Cat{color: "white", typeStr: "cat"}
-	//dog := Dog{color: "black", typeStr: "dog"}
+
 	var animal AnimalIF
 	animal = &Dog{color: "black", typeStr: "dog"}
-	animal.Run()
-	animal.Eat()
-
+	showAnimal(animal)
 	animal = &Cat{color: "white", typeStr: "cat"}
-	animal.Run()
-	animal.Eat()
+	showAnimal(animal)
 
+	cat := Cat{color: "white", typeStr: "cat"}
+	dog := Dog{color: "black", typeStr: "dog"}
+	showAnimal(&cat)
+	showAnimal(&dog)
+
+}
+func showAnimal(animal AnimalIF) {
+	animal.Sleep()
+	fmt.Println("color=", animal.GetColor())
+	fmt.Println("kind=", animal.GetType())
 }
