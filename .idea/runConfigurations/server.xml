@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="server" type="GoApplicationRunConfiguration" factoryName="Go Application" singleton="false">
+    <module name="gotest" />
+    <working_directory value="$PROJECT_DIR$" />
+    <useCustomBuildTags value="true" />
+    <kind value="PACKAGE" />
+    <package value="gotest/learn01/goIMSys" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/learn01/goIMSys/main.go" />
+    <method v="2" />
+  </configuration>
+</component>
