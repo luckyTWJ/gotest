@@ -67,5 +67,6 @@ func init() {
 		MaxMsgChanLen:    256,
 	}
 	// 从配置文件中加载一些用户自定义的参数
+	//调试的时候注释掉
 	GlobalObject.Reload()
 }
