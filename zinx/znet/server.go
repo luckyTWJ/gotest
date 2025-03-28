@@ -16,7 +16,10 @@ type Server struct {
 	Port      int
 	IPVersion string
 	// 路由 当前server添加一个router 处理
-	Router zinface.IRouter
+	//Router zinface.IRouter
+
+	//当前server的消息管理模块，用来绑定msgId和对应的处理业务API关系
+	MsgHandler zinface.IMsgHandler
 }
 
 func (s *Server) Start() {
@@ -53,7 +56,7 @@ func (s *Server) Start() {
 			fmt.Println("链接成功---cid", cid)
 			//与客户端建立链接
 			// 绑定到自定义connection
-			dealConnc := NewConnection(conn, cid, s.Router)
+			dealConnc := NewConnection(conn, cid, s.MsgHandler)
 			cid++
 			//启动当前链接的业务处理
 			go dealConnc.Start()
@@ -91,8 +94,8 @@ func (s *Server) Serve() {
 	}
 
 }
-func (s *Server) AddRouter(router zinface.IRouter) {
-	s.Router = router
+func (s *Server) AddRouter(msgId uint32, router zinface.IRouter) {
+	s.MsgHandler.AddRouter(msgId, router)
 	fmt.Println("add router success...")
 }
 
@@ -103,7 +106,8 @@ func NewServer(name string) zinface.IServer {
 		IPVersion: "tcp4",
 		IP:        utils.GlobalObject.Host,
 		Port:      utils.GlobalObject.TcpPort,
-		Router:    nil,
+		//Router:    nil,
+		MsgHandler: NewMsgHandler(),
 	}
 	return s
 }

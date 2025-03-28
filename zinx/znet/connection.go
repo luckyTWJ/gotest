@@ -21,19 +21,21 @@ type Connection struct {
 	exitChan chan bool
 
 	//该链接处理的方法router
-	Router zinface.IRouter
+	//Router zinface.IRouter
+
+	MsgHandler zinface.IMsgHandler
 }
 
 //初始化链接模块的方法
 
-func NewConnection(conn *net.TCPConn, connID uint32, r zinface.IRouter) *Connection {
+func NewConnection(conn *net.TCPConn, connID uint32, msgHandler zinface.IMsgHandler) *Connection {
 	c := &Connection{
 		Conn:     conn,
 		ConnID:   connID,
 		isClosed: false,
 		//handleAPI: callback_api,
-		Router:   r,
-		exitChan: make(chan bool, 1),
+		MsgHandler: msgHandler,
+		exitChan:   make(chan bool, 1),
 	}
 	return c
 }
@@ -83,8 +85,6 @@ func (c *Connection) StartReader() {
 
 		}
 		fmt.Println("服务器收到 拆包后的msgID:", msg.GetMsgID(), "dataLen:", msg.GetDataLen(), "data:", string(msg.GetData()))
-		//msg.SetDataLen(msg.GetDataLen())
-		//msg.SetData(data)
 
 		//得到当前conn数据的Rquerst请求数据
 		req := Request{
@@ -93,12 +93,11 @@ func (c *Connection) StartReader() {
 		}
 
 		//、从路由中 找到注册绑定的Conn对应的router调用
-
-		go func(req1 zinface.IRequest) {
-			c.Router.PreHandle(req1)
-			c.Router.Handle(req1)
-			c.Router.PostHandle(req1)
-		}(&req)
+		go c.MsgHandler.DoMsgHandler(&req)
+		//go func(req zinface.IRequest) {
+		//	c.MsgHandler.DoMsgHandler(req)
+		//
+		//}(&req)
 
 		//	调用当前链接的API处理方法  callback 回调
 		//if err := c.handleAPI(c.Conn, buf, cnt); err != nil {
