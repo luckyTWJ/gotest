@@ -37,7 +37,7 @@ func (g *GlobalObj) Reload() {
 	fmt.Println("Start loading zinx.json...")
 
 	//data, err := ioutil.ReadFile("./zinx/zinxDemo/zinxV0.4/conf/zinx.json")
-	data, err := ioutil.ReadFile("zinxDemo/zinxV0.4/conf/zinx.json")
+	data, err := ioutil.ReadFile("zinxDemo/zinxV0.5/conf/zinx.json")
 	//将json文件解析到 GlobalObject
 	if err != nil {
 		panic(err)
@@ -59,7 +59,7 @@ func init() {
 		Host:             "0.0.0.0",
 		TcpPort:          8999,
 		Name:             "ZinxServerApp",
-		Version:          "V0.4",
+		Version:          "V0.5",
 		MaxConn:          1000,
 		MaxPacketSize:    512,
 		WorkerPoolSize:   10,

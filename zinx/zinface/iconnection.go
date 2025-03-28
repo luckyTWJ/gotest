@@ -15,8 +15,8 @@ type IConnection interface {
 	//	获取远程客户端的TCP状态 IP port
 	RemoteAddr() net.Addr
 	//发送数据
-	SendMsg(data []byte) error
 
+	SendMsg(msgId uint32, data []byte) error
 	//该链接处理的方法router
 	//GetRouter() IRouter
 }
