@@ -3,8 +3,8 @@ package znet
 import (
 	"errors"
 	"fmt"
-	"gotest/zinx/utils"
 	"gotest/zinx/zinface"
+	"io"
 	"net"
 )
 
@@ -16,7 +16,7 @@ type Connection struct {
 	// 当前连接的关闭状态
 	isClosed bool
 	// 该连接的处理方法  API
-	handleAPI zinface.HandleFunc
+	//handleAPI zinface.HandleFunc
 	//告知当前链接已退出、停止 chan
 	exitChan chan bool
 
@@ -47,26 +47,57 @@ func (c *Connection) StartReader() {
 	defer c.Stop()
 
 	for {
-		//	读取客户端发送的数据到buf 最大512字节
-		buf := make([]byte, utils.GlobalObject.MaxPacketSize)
-		_, err := c.Conn.Read(buf)
+
+		//创建一个拆包解包对象
+		dp := NewDataPack()
+		//读取客户端msg Head 二进制流 8个字节
+		headData := make([]byte, dp.GetHeadLen())
+		_, err := io.ReadFull(c.GetTCPConnection(), headData)
 		if err != nil {
-			fmt.Println("read from client failed, err:", err)
-			c.exitChan <- true
-			continue
+			fmt.Println("read head err:", err)
+			break
 		}
+		fmt.Println("--headData-->", headData)
+		//拆包，得到msgID和msgData 放在msg消息中
+		//msgHead, err := dp.Unpack(headData)
+		//将二进制的head拆包到 msg结构体中
+		msg, err := dp.Unpack(headData)
+		fmt.Println("unpack success: ", msg)
+		if err != nil {
+			fmt.Println("unpack err:", err)
+			break
+		}
+		//根据dataLen 再次读取Data 放在msg.Data中
+		//var data []byte
+		fmt.Println("msg.GetDataLen-->", msg.GetDataLen())
+		if msg.GetDataLen() > 0 {
+			//msg := msgHead.(*Message) //类型断言 转换
+
+			data := make([]byte, msg.GetDataLen())
+
+			if _, err := io.ReadFull(c.GetTCPConnection(), data); err != nil {
+				fmt.Println("read msg data error:", err)
+				break
+			}
+			msg.SetData(data)
+
+		}
+		fmt.Println("服务器收到 拆包后的msgID:", msg.GetMsgID(), "dataLen:", msg.GetDataLen(), "data:", string(msg.GetData()))
+		//msg.SetDataLen(msg.GetDataLen())
+		//msg.SetData(data)
+
 		//得到当前conn数据的Rquerst请求数据
 		req := Request{
 			conn: c,
-			data: buf,
+			msg:  msg,
 		}
 
 		//、从路由中 找到注册绑定的Conn对应的router调用
 
-		go func(req zinface.IRequest) {
-			c.Router.PreHandle(req)
-			c.Router.Handle(req)
-			c.Router.PostHandle(req)
+		go func(req1 zinface.IRequest) {
+			c.Router.PreHandle(req1)
+			c.Router.Handle(req1)
+			c.Router.PostHandle(req1)
 		}(&req)
 
 		//	调用当前链接的API处理方法  callback 回调
@@ -122,14 +153,26 @@ func (conn *Connection) RemoteAddr() net.Addr {
 }
 
 // 发送数据
-func (conn *Connection) SendMsg(data []byte) error {
+
+// 提供一个setMsg方法 将我们要发给客户端的数据 先进行封包 在发送
+func (conn *Connection) SendMsg(msgId uint32, data []byte) error {
+
 	if conn.isClosed == true {
-		return errors.New("connection closed when send msg")
+		return errors.New("connection closed when set msg")
 	}
-	_, err := conn.Conn.Write(data)
+
+	//将msg进行封包 msgdataLen + msgID + data
+	dp := NewDataPack()
+	//msgDataLen|msgID|data 格式
+	pack, err := dp.Pack(NewMessage(msgId, data))
 	if err != nil {
-		fmt.Println("SendMsg err:", err)
-		return errors.New("connection closed when send msg")
+		fmt.Println("pack error msg id = ", msgId)
+		return errors.New("pack error msg ")
 	}
-	return nil
+	if _, err := conn.Conn.Write(pack); err != nil {
+		fmt.Println("write msg error msg id = ", msgId)
+		return errors.New("conn Write error")
+	}
+	return err
+
 }
