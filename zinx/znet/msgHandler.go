@@ -71,7 +71,7 @@ func (mh *MsgHandler) StartWorkerPool() {
 
 // 启动一个worker工作流程
 func (mh *MsgHandler) StartOneWorker(workerID int, taskQueue chan zinface.IRequest) {
-	fmt.Println("workerID = ", workerID, " is started...")
+	fmt.Println("StartOneWorker()-->workerID = ", workerID, " is started...")
 	//	不断阻塞等待对应的队列消息
 	for {
 		select {

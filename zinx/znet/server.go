@@ -20,6 +20,8 @@ type Server struct {
 
 	//当前server的消息管理模块，用来绑定msgId和对应的处理业务API关系
 	MsgHandler zinface.IMsgHandler
+	//server 的链接管理器
+	ConnMgr zinface.IConnManager
 }
 
 func (s *Server) Start() {
@@ -60,10 +62,19 @@ func (s *Server) Start() {
 				fmt.Println("listener.AcceptTCP err:", err)
 				continue
 			}
-			fmt.Println("链接成功---cid", cid)
-			//与客户端建立链接
-			// 绑定到自定义connection
-			dealConnc := NewConnection(conn, cid, s.MsgHandler)
+			fmt.Println("链接成功--cid->", cid)
+
+			//设置最大连接数 超过最大值则关闭客户端连接
+			if s.ConnMgr.Len() >= utils.GlobalObject.MaxConn {
+				conn.Write([]byte("Too Many connections..."))
+				fmt.Println("Too Many connections", utils.GlobalObject.MaxConn)
+				conn.Close()
+				continue
+			}
+
+			//defer conn.Close()
+			//与客户端建立链接 绑定到自定义connection
+			dealConnc := NewConnection(s, conn, cid, s.MsgHandler)
 			cid++
 			//启动当前链接的业务处理
 			go dealConnc.Start()
@@ -87,8 +98,14 @@ func CallbackToClient(conn *net.TCPConn, data []byte, cnt int) error {
 	return nil
 }
 
+func (s *Server) GetConnMgr() zinface.IConnManager {
+	return s.ConnMgr
+}
+
 func (s *Server) Stop() {
 	//服务器的资源 状态 停止或者回收
+	fmt.Println("[Zinx] Server ", s.Name, " is stoping...")
+	s.ConnMgr.ClearConn()
 }
 func (s *Server) Serve() {
 	s.Start() //异步的
@@ -115,6 +132,7 @@ func NewServer(name string) zinface.IServer {
 		Port:      utils.GlobalObject.TcpPort,
 		//Router:    nil,
 		MsgHandler: NewMsgHandler(),
+		ConnMgr:    NewConnManager(),
 	}
 	return s
 }

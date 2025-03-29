@@ -10,6 +10,8 @@ import (
 )
 
 type Connection struct {
+	// 当前链接属于哪个Server
+	Server zinface.IServer
 	// 当前连接的socket tcp套接字
 	Conn *net.TCPConn
 	// 当前连接的ID 也可以称作为SessionID，ID全局唯一
@@ -32,8 +34,9 @@ type Connection struct {
 
 //初始化链接模块的方法
 
-func NewConnection(conn *net.TCPConn, connID uint32, msgHandler zinface.IMsgHandler) *Connection {
+func NewConnection(server zinface.IServer, conn *net.TCPConn, connID uint32, msgHandler zinface.IMsgHandler) *Connection {
 	c := &Connection{
+		Server:   server,
 		Conn:     conn,
 		ConnID:   connID,
 		isClosed: false,
@@ -42,6 +45,8 @@ func NewConnection(conn *net.TCPConn, connID uint32, msgHandler zinface.IMsgHand
 		msgChan:    make(chan []byte),
 		exitChan:   make(chan bool, 1),
 	}
+	// 将当前conn添加到ConnManager中
+	c.Server.GetConnMgr().Add(c)
 	return c
 }
 
@@ -64,7 +69,7 @@ func (c *Connection) StartReader() {
 			c.exitChan <- true //通知writer
 			break
 		}
-		fmt.Println("--headData-->", headData)
+		//fmt.Println("--headData-->", headData)
 		//拆包，得到msgID和msgData 放在msg消息中
 		//msgHead, err := dp.Unpack(headData)
 		//将二进制的head拆包到 msg结构体中
@@ -74,7 +79,7 @@ func (c *Connection) StartReader() {
 			fmt.Println("unpack err:", err)
 			break
 		}
-		fmt.Println("unpack success: ", msg)
+		//fmt.Println("unpack success: ", msg)
 		//根据dataLen 再次读取Data 放在msg.Data中
 		if msg.GetDataLen() > 0 {
 			//msg := msgHead.(*Message) //类型断言 转换
@@ -164,6 +169,8 @@ func (conn *Connection) Stop() {
 	conn.Conn.Close()
 	//通知writer退出
 	conn.exitChan <- true
+	// 将当前conn从ConnManager中删除
+	conn.Server.GetConnMgr().Remove(conn)
 	//回收资源
 	close(conn.exitChan)
 	close(conn.msgChan)
