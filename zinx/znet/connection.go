@@ -157,6 +157,8 @@ func (conn *Connection) Start() {
 	//启动写消息的goroutine
 	go conn.StartWriter()
 
+	//按照开发者传递进来的 创建链接之后需要调用的处理业务 执行对应的Hook函数
+	conn.Server.CallOnConnStart(conn)
 }
 
 // 停止链接 结束当前链接工作
@@ -166,6 +168,8 @@ func (conn *Connection) Stop() {
 		return
 	}
 	conn.isClosed = true
+	// 按照开发者传递进来的 断开链接之后需要调用的处理业务 执行对应的Hook函数
+	conn.Server.CallOnConnStop(conn)
 	conn.Conn.Close()
 	//通知writer退出
 	conn.exitChan <- true
