@@ -22,6 +22,12 @@ type Server struct {
 	MsgHandler zinface.IMsgHandler
 	//server 的链接管理器
 	ConnMgr zinface.IConnManager
+
+	//该server创建链接之后自动调用Hook函数
+	OnConnStart func(conn zinface.IConnection)
+
+	//该server销毁之前自动调用的Hook函数
+	OnConnStop func(conn zinface.IConnection)
 }
 
 func (s *Server) Start() {
@@ -135,4 +141,31 @@ func NewServer(name string) zinface.IServer {
 		ConnMgr:    NewConnManager(),
 	}
 	return s
+}
+
+// 注册OnConnectionStart钩子函数的方法
+func (s *Server) SetOnConnStart(hookFunc func(conn zinface.IConnection)) {
+	s.OnConnStart = hookFunc
+}
+
+// 注册OnConnectionStop钩子函数的方法
+func (s *Server) SetOnConnStop(hookFunc func(conn zinface.IConnection)) {
+	s.OnConnStop = hookFunc
+}
+
+// 调用OnConnectionStart钩子函数的方法
+func (s *Server) CallOnConnStart(conn zinface.IConnection) {
+	if s.OnConnStart != nil {
+		fmt.Println("--->Call OnConnStart()...")
+		s.OnConnStart(conn)
+	}
+}
+
+// 调用OnConnectionStop钩子函数的方法
+func (s *Server) CallOnConnStop(conn zinface.IConnection) {
+	if s.OnConnStop != nil {
+		fmt.Println("--->Call OnConnStop()...")
+		s.OnConnStop(conn)
+	}
+
 }
