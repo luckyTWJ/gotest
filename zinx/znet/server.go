@@ -24,11 +24,18 @@ type Server struct {
 
 func (s *Server) Start() {
 
-	fmt.Printf("[Zinx] Server Name: %s, IP: %s ,Port %d, is starting\n",
+	fmt.Printf("[Zinx] Server Name: %s, IP: %s ,Port %d, is starting....\n",
 		utils.GlobalObject.Name, utils.GlobalObject.Host, utils.GlobalObject.TcpPort)
+	fmt.Println("[Zinx] Version:", utils.GlobalObject.Version,
+		"MaxConn:", utils.GlobalObject.MaxConn,
+		"WorkerPoolSize", utils.GlobalObject.WorkerPoolSize,
+		"MaxWorkerTaskLen", utils.GlobalObject.MaxWorkerTaskLen)
 	fmt.Println("===================================================")
 
 	go func() {
+		// 0.开启消息队列及worker工作池
+		s.MsgHandler.StartWorkerPool()
+
 		//	1.获取一个TCP Addr
 		addr, err := net.ResolveTCPAddr(s.IPVersion, fmt.Sprintf("%s:%d", s.IP, s.Port))
 		if err != nil {

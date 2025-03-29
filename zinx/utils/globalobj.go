@@ -24,7 +24,7 @@ type GlobalObj struct {
 	MaxPacketSize    uint32 //都包最大尺寸
 	MaxConn          int    //当前服务器主机允许的最大链接个数
 	WorkerPoolSize   uint32 //业务工作Worker池的数量
-	MaxWorkerTaskLen uint32 //业务工作Worker对应负责的任务队列最大任务存储数量
+	MaxWorkerTaskLen uint32 //业务工作Worker对应负责的任务队列最大任务存储数量(限定条件)
 	MaxMsgChanLen    uint32 //SendBuffMsg发送消息的缓冲最大长度
 }
 
@@ -37,7 +37,7 @@ func (g *GlobalObj) Reload() {
 	fmt.Println("Start loading zinx.json...")
 
 	//data, err := ioutil.ReadFile("./zinx/zinxDemo/zinxV0.4/conf/zinx.json")
-	data, err := ioutil.ReadFile("zinxDemo/zinxV0.5/conf/zinx.json")
+	data, err := ioutil.ReadFile("zinxDemo/zinxV0.8/conf/zinx.json")
 	//将json文件解析到 GlobalObject
 	if err != nil {
 		panic(err)
